@@ -4,7 +4,7 @@
   "description": "Build Slack with ReactJS",
   "main": "index.js",
   "scripts": {
-    "build": "browserify -t reactify components/chat.js -o bundle.js"
+    "build": "browserify -t reactify components/**.js -o bundle.js"
   },
   "repository": {
     "type": "git",
