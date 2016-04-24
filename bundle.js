@@ -94,8 +94,50 @@ process.umask = function() { return 0; };
 },{}],2:[function(require,module,exports){
 var React = require('react');
 var ReactDom = require('react-dom');
+var Modal = require('react-modal');
+
+const modalStyle = {
+  content : {
+    top                   : '50%',
+    left                  : '50%',
+    right                 : 'auto',
+    bottom                : 'auto',
+    marginRight           : '-50%',
+    transform             : 'translate(-50%, -50%)'
+  }
+};
 
 var Channels = React.createClass({displayName: "Channels",
+	getInitialState: function() {
+    return { modalIsOpen: false };
+  },
+
+  openModal: function() {
+    this.setState({modalIsOpen: true});
+  },
+
+  afterOpenModal: function() {
+    // references are now sync'd and can be accessed.
+    this.refs.subtitle.style.color = '#f00';
+  },
+
+  closeModal: function() {
+    this.setState({modalIsOpen: false});
+  },
+
+  joinNewChannel: function() {
+    var new_channel = $('#new-channel-name').val(); 
+    if (new_channel.trim() !== "") {
+      this.props.createChannel(new_channel);
+      this.closeModal();
+    }
+  },
+
+  onEnter: function(e){
+    if (e.nativeEvent.keyCode !== 13) return;
+    this.joinNewChannel();
+  },
+
 	render: function(){
 		var channelList = this.props.channels.map(function(channel, i){
                   return  (
@@ -110,10 +152,22 @@ var Channels = React.createClass({displayName: "Channels",
 
 		return (			
 			React.createElement("div", {className: "listings_channels"}, 
-			   React.createElement("h2", {className: "listings_header"}, "Channels"), 
-			   React.createElement("ul", {className: "channel_list"}, 
-			      channelList
-			   )
+				React.createElement("span", {className: "add_icon", onClick: this.openModal}, "+"), 
+			  React.createElement("h2", {className: "listings_header"}, "Channels"), 
+			  React.createElement("ul", {className: "channel_list"}, 
+			    channelList
+			  ), 
+
+			   React.createElement(Modal, {
+              isOpen: this.state.modalIsOpen, 
+              onRequestClose: this.closeModal, 
+              style: modalStyle}, 
+              React.createElement("h2", {className: "text-center"}, "Enter a channel to join"), 
+                React.createElement("div", null, 
+                  "# ", React.createElement("input", {id: "new-channel-name", type: "text", onKeyPress: this.onEnter}), 
+                  React.createElement("button", {className: "btn", onClick: this.joinNewChannel}, "Join")
+                )
+          )
 			)
 		)
 	}
@@ -122,7 +176,7 @@ var Channels = React.createClass({displayName: "Channels",
 
 module.exports = Channels;
 
-},{"react":188,"react-dom":45}],3:[function(require,module,exports){
+},{"react":188,"react-dom":45,"react-modal":52}],3:[function(require,module,exports){
 var React = require('react');
 var ReactDom = require('react-dom');
 var Messages =  require('./Messages');
@@ -193,6 +247,13 @@ var Chat = React.createClass({displayName: "Chat",
 						    this.enterName();
 						  },
 
+						  createChannel: function(channelName) {
+						  	if (!(channelName in this.state.channels)) {
+						      // Add new channel, if it doesn't exist yet
+						    	this.setState({ channels: this.state.channels.concat(channelName) });
+						    }
+						  },
+
               render: function() {
                 return (
                     React.createElement("div", null, 
@@ -220,7 +281,9 @@ var Chat = React.createClass({displayName: "Chat",
                         ), 
                         React.createElement("div", {className: "main"}, 
                             React.createElement("div", {className: "listings"}, 
-                            	React.createElement(Channels, {channels: this.state.channels})
+                            	React.createElement(Channels, {
+                            		channels: this.state.channels, 
+                            		createChannel: this.createChannel})
                             ), 
                             React.createElement("div", {className: "message-history"}, 
                             	React.createElement(Messages, {messages: this.state.messages})
