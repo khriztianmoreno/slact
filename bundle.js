@@ -184,13 +184,12 @@ module.exports = Channels;
 
 },{"react":188,"react-dom":45,"react-modal":52}],3:[function(require,module,exports){
 var React = require('react');
-var ReactDom = require('react-dom');
-var Messages =  require('./Messages');
-var Channels =  require('./Channels');
+var ReactDOM = require('react-dom');
+var Messages = require('./Messages');
+var Channels = require('./Channels');
 
 var Modal = require('react-modal');
-
-const customStyles = {
+const modalStyle = {
   content : {
     top                   : '50%',
     left                  : '50%',
@@ -200,122 +199,138 @@ const customStyles = {
     transform             : 'translate(-50%, -50%)'
   }
 };
+const DEFAULT_CHANNEL = "general";
 
 var Chat = React.createClass({displayName: "Chat",
-              getInitialState: function() {
+  getInitialState: function() {
 
-                return {
-                  name: null,
-                  channels: ['general'],
-                  currentChannel: 'general',
-                  messages: [{
-                    name: 'CodeUpstart',
-                    time: new Date(),
-                    text: 'Hi there! 😘', 
-                  },{
-                    name: 'CodeUpstart',
-                    time: new Date(),
-                    text: 'Welcome to your chat app'
-                  }]
-                }
-              },
+    return {
+      name: null,
+      channels: [],
+      messages: {},
+      currentChannel: null
+    }
+  },
 
-              // Lifecycle Methods -Mounting: componentDidMount
-              componentDidUpdate: function() {
-                $("#message-list").scrollTop($("#message-list")[0].scrollHeight);
-              },
+  componentDidMount: function() {
+    this.createChannel(DEFAULT_CHANNEL);
 
-              sendMessage: function(event){
-                var text = event.target.value;
-                if(event.keyCode == 13 && text !== "") {
-                  var message = {
-                    name: this.state.name,
-                    text: text,
-                    time: new Date()
-                  }
+    var messages = {};
+    messages[DEFAULT_CHANNEL] = [{
+        name: 'CodeUpstart',
+        time: new Date(),
+        text: 'Hi there! 😘', 
+      },{
+        name: 'CodeUpstart',
+        time: new Date(),
+        text: 'Welcome to your chat app'
+      }];
 
-                  this.setState({ messages: this.state.messages.concat(message)});
-                  $('#msg-input').val("");
-                }
-              },
+    this.setState({
+      messages: messages, 
+      currentChannel: DEFAULT_CHANNEL
+    });
+  },
 
-              enterName: function(event){
-						    var newName = $('#new-name').val().trim(); 
-						    if (newName === "") {
-						      randomId = Math.floor((Math.random() * 99) + 1);
-						      newName = "anonymous" + randomId;
-						    }
+  componentDidUpdate: function() {
+    //$("#message-list").scrollTop($("#message-list")[0].scrollHeight);
+  },
 
-						    this.setState({ name: newName });						    
-						  },
+  sendMessage: function(event){
+    var text = event.target.value;
+    if(event.keyCode == 13 && text !== "") {
+      var message = {
+        name: this.state.name,
+        text: text,
+        time: new Date()
+      }
+      var messages = this.state.messages
+      messages[this.state.currentChannel].push(message);
+      this.setState({ messages: messages});
+      $('#msg-input').val("");
+    }
+  },
 
-						  onEnter: function(event) {
-						    if (event.nativeEvent.keyCode !== 13) return;
-						    this.enterName();
-						  },
+  createChannel: function(channelName) {
+    if (!(channelName in this.state.channels)) {
+      // Add new channel, if it doesn't exist yet
+      var messages = this.state.messages
+      messages[channelName] = [];
+      this.setState({ 
+        channels: this.state.channels.concat(channelName),
+        messages: messages
+      });
+      this.joinChannel(channelName);
+    }
+  },
 
-						  createChannel: function(channelName) {
-						  	if (!(channelName in this.state.channels)) {
-						      // Add new channel, if it doesn't exist yet
-						    	this.setState({ channels: this.state.channels.concat(channelName) });
-						    	this.joinChannel(channelName);
-						    }
-						  },
+  joinChannel: function(channelName) {
+    this.setState({ currentChannel: channelName});
+  },
 
-						  joinChannel: function(channelName) {
-						    this.setState({currentChannel: channelName});
-						  },
+  enterName: function(event){
+    var newName = $('#new-name').val().trim(); 
+    if (newName == "") {
+      randomId = Math.floor((Math.random() * 99999) + 1);
+      newName = "anonymous" + randomId;
+    }
 
-              render: function() {
-                return (
-                    React.createElement("div", null, 
+    this.setState({ name: newName })
+  },
 
-                    	React.createElement(Modal, {
-							          isOpen: !this.state.name, 
-							          onRequestClose: this.closeModal, 
-							          style: customStyles}, 
+  onEnter: function(event) {
+    if (event.nativeEvent.keyCode != 13) return;
+    this.enterName();
+  },
 
-							          React.createElement("h2", {className: "text-center"}, "Enter a Twitter ID"), 
-						            React.createElement("div", null, 
-						              React.createElement("input", {id: "new-name", type: "text", onKeyPress: this.onEnter}), 
-						              React.createElement("button", {className: "btn", onClick: this.enterName}, "Join")
-						            )
-							        ), 
+  render: function() {
+    return (
+        React.createElement("div", null, 
+            React.createElement(Modal, {
+              isOpen: !this.state.name, 
+              style: modalStyle}, 
+              React.createElement("h2", {className: "text-center"}, "Enter a Twitter ID"), 
+                React.createElement("div", null, 
+                  React.createElement("input", {id: "new-name", type: "text", onKeyPress: this.onEnter}), 
+                  React.createElement("button", {className: "btn", onClick: this.enterName}, "Join")
+                )
+            ), 
 
-                        React.createElement("div", {className: "header"}, 
-                            React.createElement("div", {className: "team-menu"}, React.createElement("img", {className: "connection_icon", src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAABmFBMVEUAAAD////////////////////////////////////2+/LR5bKw1Hmfy1KUxz2VyD2izVKz1nnS5rP////A3JuOw0qKwkCNxD+QxT6Sxj6Txz6SxUnC3Jv1+fGXx2GDvkCGwECIwUCLwj+PxD6PxT+JwUCFwECZyGD2+vGSxWF9vEGAvkGDv0CMwz+Wx2GPw2F4ukJ7u0J+vUGBvkGHwUB8u0KSxGG31pp0uEN3uUJ5u0KFv0CCv0B6u0K415p5uU1yt0N/vUF1uEN8u0zG3bFttURwtkR5ukLH3rGWxnlqtERutUR2uUOZx3l6uVZos0VvtkRxt0Nzt0N8ulVisUVlskVns0VzuENmskVfsEVps0VztlZer0VhsEVjsUVstER1t1aOwXhcrkZdr0VgsEaQwnm/2a9YrUZbrka/2rDz+PFhr09XrEZksE6pzplUq0ZVrEZarUaqzpl0tWJRq0dWrEZ1tmJztWJOqUdSq0dxtGJMqEdNqUdQqkdytWKmzJhXrFBKqEdZrU+716+GvXhjr1dIp0hkr1dYtVOVAAAAFHRSTlMAV8/v/wCH+x/n////////////9kvBHZAAAAG7SURBVHgBvdOxjtNAEIDhGe/MZO3sxVaiIJkiSNdQUPJOeQlqXoCCIg/EU9BQHRKg5CT7ErzrHTa+aBOqaxC/tdLK+2kbj+H/hoWhlCmQr0HeyYxyM8mvkWHKoAfBS6cBWEeYugAzf4QGp1SV8DvU/ZjBdN7iud6hdnOTdl+TuALyrUPEwfdu3nc1ipr9AwdIFZPysJylRDfa6cZL2rfgMd9QjO8R0Y+/u7sa4LHZz4wN/MXEyw1hbK1VZdV7PZ1OyufzktsxXADCW5EkXq06Paan02Uoo3kHmAEzJ8HBN6v5qlkqaxTmCdAzQK8Noi6rXwCrJyutepUMAARnXS++3cvm2xvftR0PzAyQAXtwdNChifvFHppBdR003IDCIg6JDOse4DX8WIdo1TwfpaUgqWC9c4eqqg5HF20QZdAMmDlasdHWkrKR03J0A4iIXRTrpba29laiY8YMyOyMKYkXroyROZZuwVTyztAFJPmZKBGq+FxFVBr5BHr7ubd3GICfAM+88qDHHYe/BmbbIAaGKU/Fz10emDxyHxBhgJTg+DGP3O3QbltMBkd92F2H9sWxB772wo9z2z8FfwDHWbdKLDfq1AAAAABJRU5ErkJggg=="}), "  ", this.state.name, " "), 
-                            React.createElement("div", {className: "channel-menu"}, 
-                                React.createElement("span", {className: "channel-menu_name"}, 
-                                    React.createElement("span", {className: "channel-menu_prefix"}, "#"), 
-                                    "general"
-                                )
-                            )
-                        ), 
-                        React.createElement("div", {className: "main"}, 
-                            React.createElement("div", {className: "listings"}, 
-                            	React.createElement(Channels, {
-                            		channels: this.state.channels, 
-						                    currentChannel: this.state.currentChannel, 
-						                    createChannel: this.createChannel, 
-						                    joinChannel: this.joinChannel})
-                            ), 
-                            React.createElement("div", {className: "message-history"}, 
-                            	React.createElement(Messages, {messages: this.state.messages})
-                            )
-                        ), 
-                        React.createElement("div", {className: "footer"}, 
-                            React.createElement("div", {className: "user-menu"}, 
-                                React.createElement("p", {className: "disclaimer"}, "This demo is not created by, affiliated with, or supported by Slack Technologies, Inc.")
-                            ), 
-                            React.createElement("div", {className: "input-box"}, 
-                                React.createElement("input", {id: "msg-input", type: "text", className: "input-box_text", onKeyDown: this.sendMessage})
-                            )
-                        )
+            React.createElement("div", {className: "header"}, 
+                React.createElement("div", {className: "team-menu"}, React.createElement("img", {className: "connection_icon", src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAABmFBMVEUAAAD////////////////////////////////////2+/LR5bKw1Hmfy1KUxz2VyD2izVKz1nnS5rP////A3JuOw0qKwkCNxD+QxT6Sxj6Txz6SxUnC3Jv1+fGXx2GDvkCGwECIwUCLwj+PxD6PxT+JwUCFwECZyGD2+vGSxWF9vEGAvkGDv0CMwz+Wx2GPw2F4ukJ7u0J+vUGBvkGHwUB8u0KSxGG31pp0uEN3uUJ5u0KFv0CCv0B6u0K415p5uU1yt0N/vUF1uEN8u0zG3bFttURwtkR5ukLH3rGWxnlqtERutUR2uUOZx3l6uVZos0VvtkRxt0Nzt0N8ulVisUVlskVns0VzuENmskVfsEVps0VztlZer0VhsEVjsUVstER1t1aOwXhcrkZdr0VgsEaQwnm/2a9YrUZbrka/2rDz+PFhr09XrEZksE6pzplUq0ZVrEZarUaqzpl0tWJRq0dWrEZ1tmJztWJOqUdSq0dxtGJMqEdNqUdQqkdytWKmzJhXrFBKqEdZrU+716+GvXhjr1dIp0hkr1dYtVOVAAAAFHRSTlMAV8/v/wCH+x/n////////////9kvBHZAAAAG7SURBVHgBvdOxjtNAEIDhGe/MZO3sxVaiIJkiSNdQUPJOeQlqXoCCIg/EU9BQHRKg5CT7ErzrHTa+aBOqaxC/tdLK+2kbj+H/hoWhlCmQr0HeyYxyM8mvkWHKoAfBS6cBWEeYugAzf4QGp1SV8DvU/ZjBdN7iud6hdnOTdl+TuALyrUPEwfdu3nc1ipr9AwdIFZPysJylRDfa6cZL2rfgMd9QjO8R0Y+/u7sa4LHZz4wN/MXEyw1hbK1VZdV7PZ1OyufzktsxXADCW5EkXq06Paan02Uoo3kHmAEzJ8HBN6v5qlkqaxTmCdAzQK8Noi6rXwCrJyutepUMAARnXS++3cvm2xvftR0PzAyQAXtwdNChifvFHppBdR003IDCIg6JDOse4DX8WIdo1TwfpaUgqWC9c4eqqg5HF20QZdAMmDlasdHWkrKR03J0A4iIXRTrpba29laiY8YMyOyMKYkXroyROZZuwVTyztAFJPmZKBGq+FxFVBr5BHr7ubd3GICfAM+88qDHHYe/BmbbIAaGKU/Fz10emDxyHxBhgJTg+DGP3O3QbltMBkd92F2H9sWxB772wo9z2z8FfwDHWbdKLDfq1AAAAABJRU5ErkJggg=="}), "  ", this.state.name, " "), 
+                React.createElement("div", {className: "channel-menu"}, 
+                    React.createElement("span", {className: "channel-menu_name"}, 
+                        React.createElement("span", {className: "channel-menu_prefix"}, "#"), 
+                        "general"
                     )
-                );
-              }
+                )
+            ), 
+            React.createElement("div", {className: "main"}, 
+                React.createElement("div", {className: "listings"}, 
+                  React.createElement(Channels, {
+                    channels: this.state.channels, 
+                    currentChannel: this.state.currentChannel, 
+                    createChannel: this.createChannel, 
+                    joinChannel: this.joinChannel}), 
+                  React.createElement("div", {className: "listings_direct-messages"})
+                ), 
+                React.createElement("div", {className: "message-history"}, 
+                  React.createElement(Messages, {messages: this.state.messages[this.state.currentChannel]})
+                )
+            ), 
+            React.createElement("div", {className: "footer"}, 
+                React.createElement("div", {className: "user-menu"}, 
+                    React.createElement("p", {className: "disclaimer"}, "This demo is not created by, affiliated with, or supported by Slack Technologies, Inc.")
+                ), 
+                React.createElement("div", {className: "input-box"}, 
+                    React.createElement("input", {id: "msg-input", type: "text", className: "input-box_text", onKeyDown: this.sendMessage})
+                )
+            )
+        )
+    );
+  }
 
-            });
+});
 
 ReactDOM.render(React.createElement(Chat, null), document.getElementById('app'));
 
@@ -323,34 +338,37 @@ module.exports = Chat;
 
 },{"./Channels":2,"./Messages":4,"react":188,"react-dom":45,"react-modal":52}],4:[function(require,module,exports){
 var React = require('react');
-var ReactDom = require('react-dom');
+var ReactDOM = require('react-dom');
 
 var Messages = React.createClass({displayName: "Messages",
-	render: function(){
-		var messageList = this.props.messages.map(function(message, i){
-                var text = message.text;
-                  return  (
-                    React.createElement("div", {key: i, className: "message"}, 
-                        React.createElement("a", {href: "https://twitter.com/"+message.name+"/", target: "_blank"}, React.createElement("img", {src: "https://twitter.com/"+message.name+"/profile_image", className: "message_profile-pic"})), 
-                        React.createElement("a", {href: "https://twitter.com/"+message.name+"/", target: "_blank", className: "message_username"}, message.name), 
-                        React.createElement("span", {className: "message_timestamp"}, message.time.toLocaleTimeString(), " "), 
-                        React.createElement("span", {className: "message_star"}), 
-                        React.createElement("span", {className: "message_content", dangerouslySetInnerHTML: {__html: text}})
-                    )
-                  )
-        });
+  render: function() {
+    if (!this.props.messages) {return null}
 
-		return (	
-            React.createElement("div", {id: "message-list"}, 
-                React.createElement("div", {className: "time-divide"}, 
-                	React.createElement("span", {className: "date"})
-                ), 
-                messageList
-            )
-		)
-	}
+    var messageList = this.props.messages.map(function(message, i){
+      var text = message.text;
+      return  (
+        React.createElement("div", {key: i, className: "message"}, 
+            React.createElement("a", {href: "https://twitter.com/"+message.name+"/", target: "_blank"}, React.createElement("img", {src: "https://twitter.com/"+message.name+"/profile_image", className: "message_profile-pic"})), 
+            React.createElement("a", {href: "https://twitter.com/"+message.name+"/", target: "_blank", className: "message_username"}, message.name), 
+            React.createElement("span", {className: "message_timestamp"}, message.time.toLocaleTimeString(), " "), 
+            React.createElement("span", {className: "message_star"}), 
+            React.createElement("span", {className: "message_content", dangerouslySetInnerHTML: {__html: text}})
+        )
+      )
+    });
+
+    return (
+      React.createElement("div", {id: "message-list"}, 
+        React.createElement("div", {className: "time-divide"}, 
+          React.createElement("span", {className: "date"}
+
+          )
+        ), 
+        messageList
+      )
+    )
+  }
 });
-
 
 module.exports = Messages;
 
