@@ -22,6 +22,7 @@ var Chat = React.createClass({
                 return {
                   name: null,
                   channels: ['general'],
+                  currentChannel: 'general',
                   messages: [{
                     name: 'CodeUpstart',
                     time: new Date(),
@@ -72,7 +73,12 @@ var Chat = React.createClass({
 						  	if (!(channelName in this.state.channels)) {
 						      // Add new channel, if it doesn't exist yet
 						    	this.setState({ channels: this.state.channels.concat(channelName) });
+						    	this.joinChannel(channelName);
 						    }
+						  },
+
+						  joinChannel: function(channelName) {
+						    this.setState({currentChannel: channelName});
 						  },
 
               render: function() {
@@ -103,8 +109,10 @@ var Chat = React.createClass({
                         <div className="main">
                             <div className="listings">
                             	<Channels 
-                            		channels={this.state.channels}
-                            		createChannel={this.createChannel}  />
+                            		channels={this.state.channels} 
+						                    currentChannel={this.state.currentChannel}
+						                    createChannel={this.createChannel} 
+						                    joinChannel={this.joinChannel}  />
                             </div>
                             <div className="message-history">
                             	<Messages messages={this.state.messages}/>
