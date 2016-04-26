@@ -1,2 +1,2 @@
 # slact
-Slack with  ReactJS, Python and Pusher
+Slack with  ReactJS, NodeJS and Pusher
