@@ -22,9 +22,9 @@
   },
   "homepage": "https://github.com/khriztianmoreno/slact#readme",
   "dependencies": {
-    "react": "^15.0.1",
-    "react-dom": "^15.0.1",
-    "react-modal": "^3.0.0",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0",
+    "react-modal": "^1.2.1",
     "reactify": "^1.1.1"
   }
 }
